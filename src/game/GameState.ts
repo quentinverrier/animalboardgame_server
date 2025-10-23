@@ -3,46 +3,65 @@ import { Player } from "../game/Player";
 export class GameState {
 
     public players: Player[];
+    public started: boolean;
     public mushroomThreshold: number;
     public round: number;
     public turn: number;
     public cardValue: number;
     public leftToPlay: number;
     public deadCards: boolean[];
-    public constructor(players: Player[], mushroomThreshold?: number, round?: number, turn?: number, cardValue?: number, leftToPlay?: number, deadCards?: boolean[]) {
-        this.players = players;
+    public winner: boolean;
+    public constructor(players?: Player[], started?: boolean, mushroomThreshold?: number, round?: number, turn?: number, cardValue?: number, leftToPlay?: number, deadCards?: boolean[], winner?: boolean) {
+        this.players = players || [];
+        this.started = started || false;
         this.mushroomThreshold = mushroomThreshold || 5;
         this.round = round || 0;
         this.turn = turn || 0;
         this.cardValue = cardValue || 0;
         this.leftToPlay = leftToPlay || 0;
         this.deadCards = deadCards || [false, false, false, false, false];
+        this.winner = winner || false;
     }
 
     public startGame() {
-        this.round = 0;
-        for (const player of this.players) {
-            player.mushrooms = 0;
+        this.winner = false;
+        if (this.howManyReady() == this.players.length){
+            this.round = 0;
+            for (const player of this.players) {
+                player.mushrooms = 0;
+            }
+            this.started = true;
+            this.startRound();
         }
-        this.startRound();
+        else{
+            console.log("Can't start game, some players are not ready!")
+        }
     }
 
     public endGame() {
+        this.winner = true;
         console.log(`BRAVO à ${this.getGameWinners().map((player) => player.name)}`)
     }
 
-    public startRound() {
-        this.round++;
-        console.log(`Début du round ${this.round}...`);
-        this.turn = 0;
-        this.deadCards = [false, false, false, false, false];
-        for (const player of this.players) {
-            player.alive = true;
-            player.handCards = [true, true, true, true, true];
-            player.boardCards = [false, false, false, false, false];
-            player.inactiveCards = [false, false, false, false, false];
+    public toLobby(){
+        this.started = false;
+        for(const player of this.players){
+            player.ready = false;
         }
+    }
+
+    public startRound() {
         if (this.getGameWinners().length != 1) {
+            this.round++;
+            console.log(`Début du round ${this.round}...`);
+            this.turn = 0;
+            this.deadCards = [false, false, false, false, false];
+            for (const player of this.players) {
+                player.alive = true;
+                player.handCards = [true, true, true, true, true];
+                player.boardCards = [false, false, false, false, false];
+                player.inactiveCards = [false, false, false, false, false];
+            }
             this.startTurn();
         }
         else {
@@ -69,31 +88,6 @@ export class GameState {
             this.startRound();
         }
     }
-
-    // public async playStep() {
-    //     console.log(`cardValue= ${this.cardValue}...`)
-    //     if (this.cardValue == -1) {
-    //         for (const player of this.players) {
-    //             player.Play();
-    //         }
-    //         this.cardValue++;
-    //         this.playStep();
-    //     }
-    //     else if (this.cardValue < 5) {
-    //         const playersWhoPlayed = this.getPlayersWhoPlayed(this.cardValue);
-    //         if (playersWhoPlayed.length == 1 && this.higherAreDead() == false) {
-    //             playersWhoPlayed[0].Kill(this);
-    //         }
-    //         this.cardValue++;
-    //         this.playStep();
-    //     }
-    //     else if (this.cardValue == 5) {
-    //         for (const player of this.players) {
-    //             player.updateInactive();
-    //         }
-    //         this.startTurn();
-    //     }
-    // }
 
     public playStep() {
         this.cardValue++;
@@ -160,6 +154,10 @@ export class GameState {
 
     public howManyAlive() {
         return this.players.filter((player) => player.alive == true).length;
+    }
+
+    public howManyReady() {
+        return this.players.filter((player) => player.ready == true).length;
     }
 
     public getRoundWinners() {

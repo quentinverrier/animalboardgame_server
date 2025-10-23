@@ -6,12 +6,13 @@ import { Player } from './game/Player';
 // Create a WebSocket server on port 8080
 const wss = new WebSocket.Server({ port: 8080 });
 const messageService = new MessageService();
-let Tekson = new Player(0, "Tekson");
-let Kigasha = new Player(1, "Kigasha");
-let iSwitch = new Player(2, "iSwitch");
-let gameState = new GameState([Tekson, Kigasha, iSwitch]);
+// let Tekson = new Player(0, "Tekson");
+// let Kigasha = new Player(1, "Kigasha");
+// let iSwitch = new Player(2, "iSwitch");
+let gameState = new GameState();
 let clientID = 999;
-gameState.startGame();
+let nextPlayerID = 1;
+let clientPlayer = [];
 
 wss.on('connection', (client, { socket }) => {
   console.log('New client connected!');
@@ -31,17 +32,49 @@ wss.on('connection', (client, { socket }) => {
     try {
       let messageParsed = JSON.parse(message.toString());
       console.log(messageParsed);
-      if (messageParsed.type == "gatherGameState") {
-        clientID = gameState.players.filter((player) => player.client == null)[0].id;
-        gameState.players[clientID].client = client;
-        client.send(JSON.stringify({type: 'sendID', data: clientID}))
+      if (messageParsed.type == "ID"){
+        clientPlayer = gameState.players.filter((player) => player.id == clientID);
+        if (messageParsed.data == null || clientPlayer.length != 1){
+          if (gameState.players.length > 5){
+            client.send(JSON.stringify({type: 'gameFull', data: clientID}));
+          }
+          else{
+            clientID = nextPlayerID;
+            gameState.players.push(new Player(clientID));
+            clientPlayer = gameState.players.filter((player) => player.id == clientID);
+            clientPlayer[0].client = client;
+            client.send(JSON.stringify({type: 'sendID', data: clientID}));
+            nextPlayerID++;
+          }
+        }
+        else{
+          clientID = Number(messageParsed.data);
+          gameState.players.filter((player) => player.id == clientID)[0].client = client;
+        }
+      }
+      if (messageParsed.type == "setName"){
+        clientID = messageParsed.data.sessionID;
+        console.log(messageParsed.data.name);
+        gameState.players.filter((player) => player.id == clientID)[0].name = messageParsed.data.name;
+      }
+      if (messageParsed.type == "ready"){
+        clientID = messageParsed.data.sessionID;
+        gameState.players.filter((player) => player.id == clientID)[0].ready = true;
+      }
+      if (messageParsed.type == "startGame"){
+        gameState.startGame();
+      }
+      if (messageParsed.type == "toLobby") {
+        gameState.toLobby();
       }
       if (messageParsed.type == "onPlay") {
-        gameState.onPlay(messageParsed.data.choice, messageParsed.data.playerID)
+        gameState.onPlay(messageParsed.data.choice, messageParsed.data.sessionID);
       }
       if (messageParsed.type == "onKill") {
-        gameState.onKill(messageParsed.data.choice, messageParsed.data.playerID)
+        gameState.onKill(messageParsed.data.choice, messageParsed.data.sessionID);
       }
+
+      //send all clients the gameState after processing the message
       wss.clients.forEach((client) => {
         messageService.sendGameState(client, gameState);
       })
@@ -53,13 +86,17 @@ wss.on('connection', (client, { socket }) => {
       client.send("nul ton message");
     }
 
-
   });
 
   // Handle client disconnect
   client.on('close', () => {
-    clientID = gameState.players.filter((player) => player.client != null && player.client == client)[0].id;
-    gameState.players[clientID].client = null;
+    try{
+      clientID = gameState.players.filter((player) => player.client != null && player.client == client)[0].id;
+      gameState.players[clientID].client = null;
+    }
+    catch{
+      console.log("No player to unassign")
+    }
     console.log('Client disconnected');
     // Notify other clients that a client has left
     wss.clients.forEach((otherClient) => {
