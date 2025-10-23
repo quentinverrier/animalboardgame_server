@@ -1,3 +1,4 @@
 //TODO
 
-// 1. Envoyer uniquement les infos utiles aux clients
+// 1.  La première tentative de co qui n'affiche rien
+// 2. Les HandCards qui parfois ne sont pas envoyés au joueur ([] pour tout joueur)

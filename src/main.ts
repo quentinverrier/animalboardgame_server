@@ -2,6 +2,7 @@ import { WebSocket } from 'ws';
 import { MessageService } from './services/MessageService';
 import { GameState } from './game/GameState';
 import { Player } from './game/Player';
+import { v4 as uuidv4 } from 'uuid';
 
 // Create a WebSocket server on port 8080
 const wss = new WebSocket.Server({ port: 8080 });
@@ -11,7 +12,7 @@ const messageService = new MessageService();
 // let iSwitch = new Player(2, "iSwitch");
 let gameState = new GameState();
 let gameStateToSend = new GameState();
-let clientID = 999;
+let clientID = "";
 let nextPlayerID = 1;
 let clientPlayer = [];
 
@@ -34,13 +35,15 @@ wss.on('connection', (client, { socket }) => {
       let messageParsed = JSON.parse(message.toString());
       console.log(messageParsed);
       if (messageParsed.type == "ID"){
+        clientID = (messageParsed.data);
         clientPlayer = gameState.players.filter((player) => player.id == clientID);
         if (messageParsed.data == null || clientPlayer.length != 1){
           if (gameState.players.length > 5){
             client.send(JSON.stringify({type: 'gameFull', data: clientID}));
           }
           else{
-            clientID = nextPlayerID;
+            clientID = uuidv4();
+            console.log("coucou")
             gameState.players.push(new Player(clientID));
             clientPlayer = gameState.players.filter((player) => player.id == clientID);
             clientPlayer[0].client = client;
@@ -49,7 +52,6 @@ wss.on('connection', (client, { socket }) => {
           }
         }
         else{
-          clientID = Number(messageParsed.data);
           gameState.players.filter((player) => player.id == clientID)[0].client = client;
         }
       }
@@ -79,7 +81,6 @@ wss.on('connection', (client, { socket }) => {
       wss.clients.forEach((client) => {
         gameStateToSend.update(gameState);
         for (const player of gameStateToSend.players){
-          console.log(player.client);
           if(player.client != client){
             player.handCards = [];
             player.boardCards = [];
@@ -101,7 +102,7 @@ wss.on('connection', (client, { socket }) => {
   client.on('close', () => {
     try{
       clientID = gameState.players.filter((player) => player.client != null && player.client == client)[0].id;
-      gameState.players[clientID].client = null;
+      gameState.players.filter((player) => player.id == clientID)[0].client = null;
     }
     catch{
       console.log("No player to unassign")

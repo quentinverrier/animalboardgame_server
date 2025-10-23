@@ -209,7 +209,7 @@ export class GameState {
         return true;
     }
 
-    public onPlay(choice: number, playerID: number) {
+    public onPlay(choice: number, playerID: string) {
         let player = this.players.filter((player) => player.id == playerID)[0];
         if (player.canPlay == true && player.alive == true && this.leftToPlay > 0) {
             player.Play(choice);
@@ -230,7 +230,7 @@ export class GameState {
         }
     }
 
-    public onKill(choice: number, playerID: number) {
+    public onKill(choice: number, playerID: string) {
         let player = this.players.filter((player) => player.id == playerID)[0];
         if (player.canKill == true && player.alive == true && this.leftToPlay > 0) {
             player.Kill(this, choice);

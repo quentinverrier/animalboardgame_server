@@ -3,7 +3,7 @@ import { WebSocket } from "ws";
 
 export class Player{
 
-    public id: number;
+    public id: string;
     public name: string;
     public client: WebSocket | null;
     public ready: boolean;
@@ -16,8 +16,8 @@ export class Player{
     public inactiveCards: boolean[];
     public canPlay: boolean;
     public canKill: boolean;
-    public constructor(id?: number, name?: string, client?: WebSocket, ready?: boolean, mushrooms?: number, alive?: boolean, handCards?: boolean[], handCardsNumber?: number, boardCards?: boolean[], publicBoardCard?: number, inactiveCards?: boolean[], canPlay?: boolean, canKill?: boolean) {
-        this.id = id || -1;
+    public constructor(id?: string, name?: string, client?: WebSocket, ready?: boolean, mushrooms?: number, alive?: boolean, handCards?: boolean[], handCardsNumber?: number, boardCards?: boolean[], publicBoardCard?: number, inactiveCards?: boolean[], canPlay?: boolean, canKill?: boolean) {
+        this.id = id || "";
         this.name = name || "";
         this.client = client || null;
         this.ready = ready || false;
