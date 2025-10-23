@@ -10,6 +10,7 @@ const messageService = new MessageService();
 // let Kigasha = new Player(1, "Kigasha");
 // let iSwitch = new Player(2, "iSwitch");
 let gameState = new GameState();
+let gameStateToSend = new GameState();
 let clientID = 999;
 let nextPlayerID = 1;
 let clientPlayer = [];
@@ -76,7 +77,15 @@ wss.on('connection', (client, { socket }) => {
 
       //send all clients the gameState after processing the message
       wss.clients.forEach((client) => {
-        messageService.sendGameState(client, gameState);
+        gameStateToSend.update(gameState);
+        for (const player of gameStateToSend.players){
+          console.log(player.client);
+          if(player.client != client){
+            player.handCards = [];
+            player.boardCards = [];
+          }
+        }
+        messageService.sendGameState(client, gameStateToSend);
       })
 
       // Echo the message back to the client

@@ -61,6 +61,7 @@ export class GameState {
                 player.handCards = [true, true, true, true, true];
                 player.boardCards = [false, false, false, false, false];
                 player.inactiveCards = [false, false, false, false, false];
+                player.handCardsNumber = player.getHandCardsNumber();
             }
             this.startTurn();
         }
@@ -92,6 +93,9 @@ export class GameState {
     public playStep() {
         this.cardValue++;
         console.log(`cardValue= ${this.cardValue}...`)
+        for (const player of this.players){
+            player.publicBoardCard = player.getPublicBoardCard(this);
+        }
         if (this.cardValue == -1) {
             for (const player of this.players) {
                 if (player.alive == true) {
@@ -246,5 +250,38 @@ export class GameState {
             this.playStep();
         }
     }
+
+    public update(gameState: GameState){
+        this.started = gameState.started;
+        this.mushroomThreshold = gameState.mushroomThreshold;
+        this.turn = gameState.turn;
+        this.round = gameState.round;
+        this.cardValue = gameState.cardValue;
+        this.leftToPlay = gameState.leftToPlay;
+        this.deadCards = gameState.deadCards;
+        this.winner = gameState.winner;
+        for (const index in gameState.players){
+            if(!this.players[index]){
+                this.players.push(new Player());
+            }
+            let playerToSend = this.players[index];
+            let player = gameState.players[index];
+            playerToSend.id = player.id;
+            playerToSend.client = player.client;
+            playerToSend.name = player.name;
+            playerToSend.ready = player.ready;
+            playerToSend.mushrooms = player.mushrooms;
+            playerToSend.alive = player.alive;
+            playerToSend.handCards = player.handCards;
+            playerToSend.handCardsNumber = player.handCardsNumber;
+            playerToSend.inactiveCards = player.inactiveCards;
+            playerToSend.boardCards = player.boardCards;
+            playerToSend.publicBoardCard = player.publicBoardCard;
+            playerToSend.canPlay = player.canPlay;
+            playerToSend.canKill = player.canKill;
+        }
+        this.players = [...this.players]
+    }
+
 
 }

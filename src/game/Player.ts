@@ -10,11 +10,13 @@ export class Player{
     public mushrooms: number;
     public alive: boolean;
     public handCards: boolean[];
+    public handCardsNumber: number;
     public boardCards: boolean[];
+    public publicBoardCard: number;
     public inactiveCards: boolean[];
     public canPlay: boolean;
     public canKill: boolean;
-    public constructor(id?: number, name?: string, client?: WebSocket, ready?: boolean, mushrooms?: number, alive?: boolean, handCards?: boolean[], boardCards?: boolean[], inactiveCards?: boolean[], canPlay?: boolean, canKill?: boolean) {
+    public constructor(id?: number, name?: string, client?: WebSocket, ready?: boolean, mushrooms?: number, alive?: boolean, handCards?: boolean[], handCardsNumber?: number, boardCards?: boolean[], publicBoardCard?: number, inactiveCards?: boolean[], canPlay?: boolean, canKill?: boolean) {
         this.id = id || -1;
         this.name = name || "";
         this.client = client || null;
@@ -22,7 +24,9 @@ export class Player{
         this.mushrooms = mushrooms || 0;
         this.alive = alive || true;
         this.handCards = handCards || [true, true, true, true, true];
+        this.handCardsNumber = handCardsNumber || 5;
         this.boardCards = boardCards || [false, false, false, false, false];
+        this.publicBoardCard = publicBoardCard || -1;
         this.inactiveCards = inactiveCards || [false, false, false, false, false];
         this.canPlay = canPlay || false;
         this.canKill = canKill || false;
@@ -37,6 +41,7 @@ export class Player{
         else {
             console.error(`${this.constructor.name}.Play`);
         }
+        this.handCardsNumber = this.getHandCardsNumber();
     }
 
     public Kill(gameState: GameState, choice: number) {
@@ -78,6 +83,24 @@ export class Player{
             this.inactiveCards = [false, false, false, false, false];
         }
 
+    }
+
+    public getHandCardsNumber(){
+        return this.handCards.filter((handCard) => handCard == true).length;
+    }
+
+    public getPublicBoardCard(gameState: GameState){
+        let currentBoardCards = [];
+        for (const index in this.boardCards) {
+            if (this.boardCards[index] == true) currentBoardCards.push(Number(index));
+        }
+        let boardCard = currentBoardCards[0]
+        if (boardCard != undefined && this.alive == true && gameState.cardValue >= boardCard){
+            return boardCard; 
+        }
+        else{
+            return -1;
+        }
     }
 
     public getScore() {
