@@ -43,7 +43,6 @@ wss.on('connection', (client, { socket }) => {
           }
           else{
             clientID = uuidv4();
-            console.log("coucou")
             gameState.players.push(new Player(clientID));
             clientPlayer = gameState.players.filter((player) => player.id == clientID);
             clientPlayer[0].client = client;
